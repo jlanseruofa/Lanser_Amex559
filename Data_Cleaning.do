@@ -135,6 +135,77 @@ replace fico = . if fico < 350 | fico > 850
 
 
 
+
+
+* STEP. Create tenure based on earliest anniv date *
+* Make sure the date variables are Stata dates (numeric daily dates).
+* If anniv_chrg_dt and anniv_lend_dt are strings like "YYYY-MM-DD", convert them:
+gen double chrg_date = daily(anniv_chrg_dt, "YMD")
+gen double lend_date = daily(anniv_lend_dt, "YMD")
+format chrg_date lend_date %td
+
+* Step 2: Pick the earliest date
+egen double start_date = rowmin(chrg_date lend_date)
+format start_date %td
+
+* Step 3: Calculate tenure in years
+gen tenure = (today() - start_date) / 365.25
+
+
+
+
+* STEP. Create credit segment dummies *
+gen cs_other        = (credit_segment == "Other")
+gen cs_low_balance  = (credit_segment == "Low Balance")
+gen cs_currents     = (credit_segment == "Currents")
+gen cs_seg_a        = (credit_segment == "Seg A")
+gen cs_high_balance = (credit_segment == "High Balance")
+gen cs_cfs_team     = (credit_segment == "CFS Team")
+gen cs_arct_team    = (credit_segment == "ARCT Team")
+
+
+
+
+
+
+* STEP. Create dummies for TSR and CDSS Scores *
+* TSR score exact bins
+gen tsr_0    = (tsr_score == 0)
+gen tsr_999  = (tsr_score == .999)
+
+* CDSS score exact bins
+gen cdss_0   = (cdss_score == 0)
+gen cdss_999 = (cdss_score == .999)
+
+
+* TSR bins (excluding 0 and .999)
+forvalues i = 1/9 {
+    local lo = (`i'-1)/10
+    local hi = `i'/10
+    gen tsr_bin`i' = (tsr_score > `lo' & tsr_score <= `hi' & tsr_score != 0 & tsr_score != .999)
+}
+
+* CDSS bins (excluding 0 and .999)
+forvalues i = 1/9 {
+    local lo = (`i'-1)/10
+    local hi = `i'/10
+    gen cdss_bin`i' = (cdss_score > `lo' & cdss_score <= `hi' & cdss_score != 0 & cdss_score != .999)
+}
+
+
+
+* Final pre roll up step: Remove variables no longer needed after new var creation *
+drop case_grp_cd
+drop anniv_chrg_dt anniv_lend_dt
+drop tsr_score cdss_score
+drop credit_segment
+drop open_dt close_dt
+drop chrg_date lend_date start_date
+
+
+
+
+
 *** Step 5: Roll Up data based on EN case open action code ***
 ****************************************************
 * STEP. Keep only EN rows (case open info per triplicate)

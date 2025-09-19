@@ -82,7 +82,7 @@ gen tot_bal_over_exp = tot_bal_due / total_case_exposure
 
 
 * Code FICO scores to missing if the customer is COMP, since it is not relevant in that case *
-replace fico = . if case_grp_cd == "COMP"
+* replace fico = . if case_grp_cd == "COMP"
 
 
 

@@ -4,7 +4,6 @@
 *** Then this file will roll up based on the EN act code (case open only data) ***
 
 
-
 clear all
 
 
@@ -27,6 +26,12 @@ save "`box'/`proj_rand'/amex_1_pct.dta", replace
 describe
 count
 
+* Ensure global chronological order: triplicate then DESC act_seq_no
+gsort triplicate -act_seq_no
+
+* Helper for bysort: ascending on negative = descending on original
+tempvar seqdesc
+gen double `seqdesc' = -act_seq_no
 
 
 
@@ -36,7 +41,6 @@ count
 drop pseudo_key
 drop case_seq_no
 drop case_setup_type
-drop act_seq_no
 drop ctc_plce_cd
 drop ctc_prty_cd
 drop rule_no
@@ -52,6 +56,7 @@ drop strategy1_cd strategy2_cd strategy3_cd strategy4_cd
 drop product_types pseudo_key_file1 pseudo_key_new pseudo_key_file2 pseudo_key_file3 pseudo_key_file4
 
 
+
 *** Step 3: Create new variables needed for analysis
 
 * CUST/COMP Binary Creation
@@ -65,7 +70,6 @@ gen smbus_bi = .
 replace smbus_bi = 1 if case_grp_cd == "COMP"
 replace smbus_bi = 0 if case_grp_cd == "CUST"
 
-
 * Total Balance Due Variable, Binary Charge/Lend Dummies *
 gen tot_bal_due = tot_due_chrg_am + tot_due_lend_am
 
@@ -75,28 +79,24 @@ gen charge_dum = (tot_due_chrg_am != 0) if !missing(tot_due_chrg_am)
 * Lend dummy: 1 if nonzero, 0 if zero
 gen lend_dum = (tot_due_lend_am != 0) if !missing(tot_due_lend_am)
 
-
-
 * Total Balance Due / Total Case Exposure Variable *
 gen tot_bal_over_exp = tot_bal_due / total_case_exposure
-
 
 * Code FICO scores to missing if the customer is COMP, since it is not relevant in that case *
 * replace fico = . if case_grp_cd == "COMP"
 
 
 
-
 *** Step 4: Continue to filter data and create needed vars ***
 ****************************************************
-* STEP. Sort data by triplicate and action date
+* STEP. Keep dataset ordered by triplicate and DESC act_seq_no
 ****************************************************
-sort triplicate act_dt act_tm
+gsort triplicate -act_seq_no
 
 ****************************************************
-* STEP. Drop triplicates where EN is not the first act
+* STEP. Drop triplicates where EN is not the first act (in DESC seq order)
 ****************************************************
-bys triplicate (act_dt act_tm): gen first_act = act_type_cd[1]
+bys triplicate (`seqdesc'): gen first_act = act_type_cd[1]
 drop if first_act != "EN"
 drop first_act
 
@@ -113,27 +113,37 @@ else {
     gen double act_dt_num = act_dt
 }
 
-* Earliest EN date (case open)
-bys triplicate (act_dt_num): egen open_dt = min(cond(act_type_cd=="EN", act_dt_num, .))
-
-* Earliest closing date (RI or SI) after EN
-bys triplicate (act_dt_num): egen close_dt = min(cond(inlist(act_type_cd,"RI","SI"), act_dt_num, .))
+* Earliest EN date (case open) and earliest RI/SI closing date
+by triplicate: egen open_dt  = min(cond(act_type_cd=="EN", act_dt_num, .))
+by triplicate: egen close_dt = min(cond(inlist(act_type_cd,"RI","SI"), act_dt_num, .))
 
 * Duration in days
 gen case_duration = close_dt - open_dt
 
 ****************************************************
-* STEP. Flags for past 30 and 60 days (from all rows)
+* STEP. Compute max age_day_ct per triplicate, trim out <31,
+*       and create past 30/60 binary indicators
 ****************************************************
-bys triplicate: egen past_30_bi = max(age_day_ct > 30)
-bys triplicate: egen past_60_bi = max(age_day_ct >= 60)
+preserve
+collapse (max) max_age_day_ct=age_day_ct, by(triplicate)
+tempfile maxages
+save `maxages'
+restore
+
+merge m:1 triplicate using `maxages', nogen
+
+* Trim out triplicates that never reached 31+
+drop if max_age_day_ct < 31
+
+* Binary indicators
+gen past_30_bi = (max_age_day_ct > 30)
+gen past_60_bi = (max_age_day_ct >= 60)
+
 
 ****************************************************
 * STEP. Clean FICO values
 ****************************************************
 replace fico = . if fico < 350 | fico > 850
-
-
 
 
 
@@ -153,7 +163,6 @@ gen tenure = (today() - start_date) / 365.25
 
 
 
-
 * STEP. Create credit segment dummies *
 gen cs_other        = (credit_segment == "Other")
 gen cs_low_balance  = (credit_segment == "Low Balance")
@@ -165,9 +174,6 @@ gen cs_arct_team    = (credit_segment == "ARCT Team")
 
 
 
-
-
-
 * STEP. Create dummies for TSR and CDSS Scores *
 * TSR score exact bins
 gen tsr_0    = (tsr_score == 0)
@@ -176,7 +182,6 @@ gen tsr_999  = (tsr_score == .999)
 * CDSS score exact bins
 gen cdss_0   = (cdss_score == 0)
 gen cdss_999 = (cdss_score == .999)
-
 
 * TSR bins (excluding 0 and .999)
 forvalues i = 1/9 {
@@ -192,8 +197,6 @@ forvalues i = 1/9 {
     gen cdss_bin`i' = (cdss_score > `lo' & cdss_score <= `hi' & cdss_score != 0 & cdss_score != .999)
 }
 
-
-
 * Final pre roll up step: Remove variables no longer needed after new var creation *
 drop case_grp_cd
 drop anniv_chrg_dt anniv_lend_dt
@@ -204,16 +207,16 @@ drop chrg_date lend_date start_date
 
 
 
-
-
 *** Step 5: Roll Up data based on EN case open action code ***
 ****************************************************
+* Keep order before filtering
+gsort triplicate -act_seq_no
+
 * STEP. Keep only EN rows (case open info per triplicate)
-****************************************************
 keep if act_type_cd == "EN"
 
-* If multiple EN per triplicate, keep the first only
-bys triplicate (act_dt_num): keep if _n == 1
+* If multiple EN per triplicate, keep the first only (DESC seq means highest seq kept)
+bys triplicate (`seqdesc'): keep if _n == 1
 
 ****************************************************
 * STEP. Filter on age_day_ct at case open
@@ -228,8 +231,16 @@ keep if inrange(age_day_ct, 27, 33)
 
 * Drop act_type variable now since EN is implied *
 drop act_type_cd
+drop act_seq_no
 
 
+
+
+
+****************************************************
+* STEP. Drop triplicates with missing FICO after roll up
+****************************************************
+drop if missing(fico)
 
 
 * Save the cleaned .dta file to my Joseph folder in box *
@@ -247,5 +258,3 @@ cap mkdir "`outdir'"
 * --------- save cleaned rolled dataset ---------
 compress
 save "`outdir'/Cleaned_Rolled_Joseph.dta", replace
-
-

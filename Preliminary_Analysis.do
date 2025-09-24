@@ -22,6 +22,10 @@ summarize
 count
 
 
+*** Calc Roll Fordward Rate ***
+summarize past_60_bi past_30_bi
+tab past_60_bi
+
 
 
 

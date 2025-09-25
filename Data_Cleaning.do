@@ -234,6 +234,35 @@ drop act_type_cd
 drop act_seq_no
 
 
+* Code Balance and Eposure variables to be /1000 *
+replace tot_due_chrg_am       = tot_due_chrg_am       / 1000
+replace tot_due_lend_am       = tot_due_lend_am       / 1000
+replace tot_expr_chrg         = tot_expr_chrg         / 1000
+replace tot_expr_lend         = tot_expr_lend         / 1000
+replace total_case_exposure   = total_case_exposure   / 1000
+replace tot_past_due_chrg_am  = tot_past_due_chrg_am  / 1000
+replace tot_past_due_lend_am  = tot_past_due_lend_am  / 1000
+replace tot_bal_due  = tot_past_due_lend_am  / 1000
+
+
+label variable tot_due_chrg_am "Scaled /1000"
+label variable tot_due_lend_am "Scaled /1000"
+label variable tot_expr_chrg "Scaled /1000"
+label variable tot_expr_lend "Scaled /1000"
+label variable total_case_exposure "Scaled /1000"
+label variable tot_past_due_chrg_am "Scaled /1000"
+label variable tot_past_due_lend_am "Scaled /1000"
+label variable tot_bal_due "Scaled /1000"
+
+* Final Var Drop *
+drop act_dt
+drop act_tm
+drop smbus_bi
+drop lend_dum
+drop act_dt_num
+drop max_age_day_ct
+
+
 
 
 

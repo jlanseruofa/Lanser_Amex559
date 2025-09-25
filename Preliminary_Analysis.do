@@ -30,38 +30,44 @@ tab past_60_bi
 
 
 
-* Prelim Log Model Setup *
-
-* Logit Regression *
+*** Base Model : Roll over = FICO, CDSS, and TSR ***
 logit past_60_bi fico tsr_0 tsr_999 cdss_0 cdss_999 ///
     tsr_bin1 tsr_bin2 tsr_bin3 tsr_bin4 tsr_bin5 tsr_bin6 tsr_bin7 tsr_bin8 tsr_bin9 ///
-    cdss_bin1 cdss_bin2 cdss_bin3 cdss_bin4 cdss_bin5 cdss_bin6 cdss_bin7 cdss_bin8 cdss_bin9 ///
-    tenure tot_past_due_chrg_am tot_past_due_lend_am tot_bal_over_exp num_products ///
-    cust_bi smbus_bi charge_dum lend_dum ///
-    cs_other cs_low_balance cs_currents cs_seg_a cs_high_balance cs_cfs_team cs_arct_team
-	
-predict phat, pr
+    cdss_bin1 cdss_bin2 cdss_bin3 cdss_bin4 cdss_bin5 cdss_bin6 cdss_bin7 cdss_bin8 cdss_bin9
+
+margins, dydx(*)
 
 
-	
-* Odds ratios (easier interpretation) *
-logistic past_60_bi fico tsr_0 tsr_999 cdss_0 cdss_999 ///
+
+*** Advanced Model : Roll Over = FICO, CDSS, TSR, Total balance due, customer vs small business binary, ***
+*** charge vs lend binary, case duration, tenure, credit segments ***
+logit past_60_bi ///
+    fico tsr_0 tsr_999 cdss_0 cdss_999 ///
     tsr_bin1 tsr_bin2 tsr_bin3 tsr_bin4 tsr_bin5 tsr_bin6 tsr_bin7 tsr_bin8 tsr_bin9 ///
     cdss_bin1 cdss_bin2 cdss_bin3 cdss_bin4 cdss_bin5 cdss_bin6 cdss_bin7 cdss_bin8 cdss_bin9 ///
-    tenure tot_past_due_chrg_am tot_past_due_lend_am tot_bal_over_exp num_products ///
-    cust_bi smbus_bi charge_dum lend_dum ///
+    cust_bi tot_bal_due charge_dum tot_bal_over_exp case_duration tenure ///
     cs_other cs_low_balance cs_currents cs_seg_a cs_high_balance cs_cfs_team cs_arct_team
+
+	margins, dydx(*)
 	
+	
+	
+* Check predictive power *	
+preserve
+
+* 1. Predict probabilities
 predict phat, pr
 
-	
-* Phat minus P *
-gen resid = past_60_bi - phat
-summarize resid
-corr past_60_bi phat
+* 2. Turn probabilities into 0/1 predictions
+gen yhat = (phat >= 0.5)
 
-*Visaul
-twoway (scatter past_60_bi phat, jitter(3)) (lfit past_60_bi phat)
+* 3. Quick look at prediction vs. actual
+tabulate past_60_bi yhat, row col
 
+* 4. Classification stats (accuracy, sensitivity, specificity)
+estat classification
 
+* 5. Optional: correlation between predicted probability & actual
+correlate past_60_bi phat
 
+restore

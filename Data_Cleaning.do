@@ -177,24 +177,24 @@ gen cs_arct_team    = (credit_segment == "ARCT Team")
 * STEP. Create dummies for TSR and CDSS Scores *
 * TSR score exact bins
 gen tsr_0    = (tsr_score == 0)
-gen tsr_999  = (tsr_score == .999)
+gen tsr_1  = (tsr_score == 1)
 
 * CDSS score exact bins
 gen cdss_0   = (cdss_score == 0)
-gen cdss_999 = (cdss_score == .999)
+gen cdss_1 = (cdss_score == 1)
 
 * TSR bins (excluding 0 and .999)
 forvalues i = 1/9 {
     local lo = (`i'-1)/10
     local hi = `i'/10
-    gen tsr_bin`i' = (tsr_score > `lo' & tsr_score <= `hi' & tsr_score != 0 & tsr_score != .999)
+    gen tsr_bin`i' = (tsr_score > `lo' & tsr_score <= `hi' & tsr_score != 0 & tsr_score != 1)
 }
 
 * CDSS bins (excluding 0 and .999)
 forvalues i = 1/9 {
     local lo = (`i'-1)/10
     local hi = `i'/10
-    gen cdss_bin`i' = (cdss_score > `lo' & cdss_score <= `hi' & cdss_score != 0 & cdss_score != .999)
+    gen cdss_bin`i' = (cdss_score > `lo' & cdss_score <= `hi' & cdss_score != 0 & cdss_score != 1)
 }
 
 * Final pre roll up step: Remove variables no longer needed after new var creation *

@@ -226,7 +226,6 @@ drop has_charge has_lend
 * Final pre roll up step: Remove variables no longer needed after new var creation *
 drop case_grp_cd
 drop anniv_chrg_dt anniv_lend_dt
-drop tsr_score cdss_score
 drop credit_segment
 drop open_dt close_dt
 drop chrg_date lend_date start_date

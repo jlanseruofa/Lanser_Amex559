@@ -31,11 +31,12 @@ tab past_60_bi
 
 
 *** Base Model : Roll over = FICO, CDSS, and TSR ***
-logit past_60_bi fico tsr_0 tsr_1 cdss_0 cdss_1 ///
-    tsr_bin1 tsr_bin2 tsr_bin3 tsr_bin4 tsr_bin5 tsr_bin6 tsr_bin7 tsr_bin8 tsr_bin9 ///
-    cdss_bin1 cdss_bin2 cdss_bin3 cdss_bin4 cdss_bin5 cdss_bin6 cdss_bin7 cdss_bin8 cdss_bin9
+logit past_60_bi tot_bal_due charge_dum tot_bal_over_exp case_duration tenure charge_lend_bi charge_bi
 
 margins, dydx(*)
+
+
+
 
 
 

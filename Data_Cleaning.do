@@ -197,6 +197,32 @@ forvalues i = 1/9 {
     gen cdss_bin`i' = (cdss_score > `lo' & cdss_score <= `hi' & cdss_score != 0 & cdss_score != 1)
 }
 
+
+
+*** Charge and Lend Dummies ***
+* Sort so each triplicate is grouped
+sort triplicate
+
+* Step 1: Flag if there is any nonmissing charge or lend date for each triplicate
+bys triplicate: egen has_charge = max(!missing(anniv_chrg_dt))
+bys triplicate: egen has_lend   = max(!missing(anniv_lend_dt))
+
+* Step 2: Create the two dummies
+gen charge_lend_bi = (has_charge==1 & has_lend==1)
+gen charge_bi      = (has_charge==1 & has_lend==0)
+
+* Step 3: If charge_lend_bi == 1, force charge_bi to 0
+replace charge_bi = 0 if charge_lend_bi == 1
+
+* (Optional) Drop helper vars
+drop has_charge has_lend
+
+
+
+
+
+
+
 * Final pre roll up step: Remove variables no longer needed after new var creation *
 drop case_grp_cd
 drop anniv_chrg_dt anniv_lend_dt

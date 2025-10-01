@@ -72,3 +72,128 @@ estat classification
 correlate past_60_bi phat
 
 restore
+
+
+
+
+
+
+
+
+*** Running separate models for charge, lend, charge+lend, consumer, small business. ***
+*** 6 total models ***
+
+****************************************************
+* Logistic regressions by customer segment
+* cust_bi = 1 consumer, 0 small business
+* charge_dum = 1 charge, 0 lend
+* charge_lend_bi = 1 charge+lend
+****************************************************
+
+****************************************************
+* Logistic regressions by customer segment
+* past_60_bi = dependent variable
+* Predictors: fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure
+* cust_bi = 1 consumer, 0 small business
+* charge_dum = 1 charge, 0 lend
+* charge_lend_bi = 1 charge+lend
+****************************************************
+
+*--- 1. Consumer Charge
+logit past_60_bi fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure ///
+    if cust_bi==1 & charge_dum==1 & charge_lend_bi==0
+margins, dydx(*) post
+
+*--- 2. Consumer Lend
+logit past_60_bi fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure ///
+    if cust_bi==1 & charge_dum==0 & charge_lend_bi==0
+margins, dydx(*) post
+
+*--- 3. Consumer Charge + Lend
+logit past_60_bi fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure ///
+    if cust_bi==1 & charge_lend_bi==1
+margins, dydx(*) post
+
+*--- 4. Small Business Charge
+logit past_60_bi fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure ///
+    if cust_bi==0 & charge_dum==1 & charge_lend_bi==0
+margins, dydx(*) post
+
+*--- 5. Small Business Lend
+logit past_60_bi fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure ///
+    if cust_bi==0 & charge_dum==0 & charge_lend_bi==0
+margins, dydx(*) post
+
+*--- 6. Small Business Charge + Lend
+logit past_60_bi fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure ///
+    if cust_bi==0 & charge_lend_bi==1
+margins, dydx(*) post
+
+
+
+
+
+* AI idea ***
+****************************************************
+* Build and test a pooled logistic model vs. separate segments
+* DV: past_60_bi
+* Predictors: fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure
+* Segments: 
+*   1 = Consumer Charge
+*   2 = Consumer Lend
+*   3 = Consumer Charge+Lend
+*   4 = Small Business Charge
+*   5 = Small Business Lend
+*   6 = Small Business Charge+Lend
+****************************************************
+
+*--- Create one segment variable
+gen seg = .
+replace seg = 1 if cust_bi==1 & charge_dum==1 & charge_lend_bi==0
+replace seg = 2 if cust_bi==1 & charge_dum==0 & charge_lend_bi==0
+replace seg = 3 if cust_bi==1 & charge_lend_bi==1
+replace seg = 4 if cust_bi==0 & charge_dum==1 & charge_lend_bi==0
+replace seg = 5 if cust_bi==0 & charge_dum==0 & charge_lend_bi==0
+replace seg = 6 if cust_bi==0 & charge_lend_bi==1
+
+label define seglbl 1 "C-Charge" 2 "C-Lend" 3 "C-Both" 4 "SB-Charge" 5 "SB-Lend" 6 "SB-Both"
+label values seg seglbl
+
+****************************************************
+*--- Fit pooled model with full interactions
+****************************************************
+logit past_60_bi i.seg##c.(fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure)
+
+****************************************************
+*--- Global test: do slopes differ across segments?
+****************************************************
+testparm i.seg#c.(fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure)
+
+****************************************************
+*--- Variable-by-variable slope difference tests
+****************************************************
+testparm i.seg#c.fico
+testparm i.seg#c.tsr_score
+testparm i.seg#c.cdss_score
+testparm i.seg#c.num_products
+testparm i.seg#c.tot_bal_due
+testparm i.seg#c.tot_bal_over_exp
+testparm i.seg#c.tenure
+
+****************************************************
+*--- Margins: AMEs of each predictor by segment
+****************************************************
+margins, dydx(fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure) over(seg)
+
+****************************************************
+*--- (Optional) Export margins to Excel
+****************************************************
+* Uncomment next lines if you have outreg2 installed
+* margins, dydx(fico tsr_score cdss_score num_products tot_bal_due tot_bal_over_exp tenure) over(seg) post
+* outreg2 using "pooled_margins_by_segment.xlsx", replace excel
+
+****************************************************
+*--- (Optional) Compare information criteria (AIC/BIC)
+****************************************************
+estat ic
+

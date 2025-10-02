@@ -177,11 +177,11 @@ gen cs_arct_team    = (credit_segment == "ARCT Team")
 * STEP. Create dummies for TSR and CDSS Scores *
 * TSR score exact bins
 gen tsr_0    = (tsr_score == 0)
-gen tsr_1  = (tsr_score == 1)
+gen tsr_999  = (tsr_score == .999)
 
 * CDSS score exact bins
 gen cdss_0   = (cdss_score == 0)
-gen cdss_1 = (cdss_score == 1)
+gen cdss_999 = (cdss_score == .999)
 
 * TSR bins (excluding 0 and .999)
 forvalues i = 1/9 {
@@ -228,7 +228,7 @@ drop case_grp_cd
 drop anniv_chrg_dt anniv_lend_dt
 drop credit_segment
 drop open_dt close_dt
-drop chrg_date lend_date start_date
+drop chrg_date lend_date
 
 
 
@@ -280,12 +280,35 @@ label variable tot_past_due_lend_am "Scaled /1000"
 label variable tot_bal_due "Scaled /1000"
 
 * Final Var Drop *
-drop act_dt
 drop act_tm
 drop smbus_bi
 drop lend_dum
 drop act_dt_num
 drop max_age_day_ct
+drop start_date
+
+
+
+*** Dummy for 2+ Num of Products ***
+* Create a dummy for multiple products
+gen multiple_products = .
+replace multiple_products = 1 if num_products >= 2
+replace multiple_products = 0 if num_products == 1
+
+
+
+
+*** FICO dummy for categories ***
+*--- Create FICO category dummies ---
+gen fico_verypoor = (fico >= 300 & fico <= 579)
+gen fico_poor     = (fico >= 580 & fico <= 669)
+gen fico_good     = (fico >= 670 & fico <= 739)
+gen fico_verygood = (fico >= 740 & fico <= 799)
+gen fico_excellent= (fico >= 800 & fico <= 850)
+
+
+* tenure squared variable *
+gen tenure_squared = tenure^2
 
 
 

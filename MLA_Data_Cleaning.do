@@ -345,6 +345,32 @@ gen tenure_squared = tenure^2
 drop if missing(fico)
 
 
+
+
+
+* Drop vars not wanted for Machine Learning? *
+drop triplicate
+drop act_dt
+drop age_day_ct
+drop tot_past_due_chrg_am
+drop tot_past_due_lend_am
+drop tot_due_chrg_am
+drop tot_due_lend_am
+drop tot_expr_chrg
+drop tot_expr_lend
+drop total_case_exposure
+drop probc_score
+drop act_date
+drop month_num
+drop case_duration
+
+
+
+
+
+
+
+
 * Save the cleaned .dta file to my Joseph folder in box *
 * --------- paths (same base as before) ---------
 local HOME : env HOME
@@ -359,4 +385,4 @@ cap mkdir "`outdir'"
 
 * --------- save cleaned rolled dataset ---------
 compress
-save "`outdir'/Cleaned_Rolled_Joseph.dta", replace
+save "`outdir'/MLA_Cleaned_Rolled_Joseph.dta", replace

@@ -363,6 +363,7 @@ drop probc_score
 drop act_date
 drop month_num
 drop case_duration
+drop tenure_squared
 
 
 

@@ -59,25 +59,25 @@ drop product_types pseudo_key_file1 pseudo_key_new pseudo_key_file2 pseudo_key_f
 
 * Case Open Month Dummies *
 *--- Ensure act_dt is a proper Stata date variable ---
-gen double act_date = date(act_dt, "YMD")
-format act_date %td
+*gen double act_date = date(act_dt, "YMD")
+*format act_date %td
 
 *--- Extract month number (1 = January, 12 = December) ---
-gen byte month_num = month(act_date)
+*gen byte month_num = month(act_date)
 
 *--- Loop through all 12 months and generate dummies ---
-forvalues m = 1/12 {
-    local mon : word `m' of jan feb mar apr may jun jul aug sep oct nov dec
-    gen byte case_start_`mon' = (act_type_cd == "EN" & month_num == `m')
-}
+*forvalues m = 1/12 {
+ *   local mon : word `m' of jan feb mar apr may jun jul aug sep oct nov dec
+  *  gen byte case_start_`mon' = (act_type_cd == "EN" & month_num == `m')
+*}
 
 *--- (Optional) Verify results ---
-tab month_num if act_type_cd == "EN"
-list act_type_cd act_dt case_start_* if act_type_cd == "EN" in 1/10
-drop case_start_sep
-drop case_start_oct
-drop case_start_nov
-drop case_start_dec
+*tab month_num if act_type_cd == "EN"
+*list act_type_cd act_dt case_start_* if act_type_cd == "EN" in 1/10
+*drop case_start_sep
+*drop case_start_oct
+*drop case_start_nov
+*drop case_start_dec
 
 
 
@@ -315,10 +315,10 @@ drop start_date
 
 *** Dummy for 2+ Num of Products ***
 * Create a dummy for multiple products
-gen multiple_products = .
-replace multiple_products = 1 if num_products >= 2
-replace multiple_products = 0 if num_products == 1
-drop num_products
+*gen multiple_products = .
+*replace multiple_products = 1 if num_products >= 2
+*replace multiple_products = 0 if num_products == 1
+*drop num_products
 
 
 
@@ -350,20 +350,52 @@ drop if missing(fico)
 
 * Drop vars not wanted for Machine Learning? *
 drop triplicate
-drop act_dt
-drop age_day_ct
-drop tot_past_due_chrg_am
-drop tot_past_due_lend_am
-drop tot_due_chrg_am
-drop tot_due_lend_am
-drop tot_expr_chrg
-drop tot_expr_lend
-drop total_case_exposure
-drop probc_score
-drop act_date
-drop month_num
+*drop act_dt
+*drop age_day_ct
+*drop tot_past_due_chrg_am
+*drop tot_past_due_lend_am
+*drop tot_due_chrg_am
+*drop tot_due_lend_am
+*drop tot_expr_chrg
+*drop tot_expr_lend
+*drop total_case_exposure
+*drop probc_score
+*drop act_date
+*drop month_num
 drop case_duration
 drop tenure_squared
+
+
+****************************************************
+* Change names/definitions for congruency *
+****************************************************
+
+rename tsr_score tsr
+rename cdss_score cdss
+rename tot_bal_due bal_due
+label variable tsr "Continuous TSR Score"
+label variable fico "Continuous FICO Score"
+label variable cdss "Continuous CDSS Score"
+label variable bal_due "(Total Past Due Charge + Total Past Due Lend)/1000     *scaled by 1000*"
+rename tot_bal_over_exp bal_over_expr
+label variable bal_over_expr "Total Balance Due / Total Case Exposure"
+rename past_60_bi roll_forward
+label variable roll_forward "Dummy for Case Roll Forward"
+label variable tenure "Min Anniv Date *Years*"
+rename charge_bi d_chrg
+label variable d_chrg "Dummy for Charge Customers"
+rename charge_lend_bi d_chrg_lend
+label variable d_chrg_lend "Dummy for Charge&Lend Customers (Both)"
+rename cust_bi d_consumer
+label variable d_consumer "Dummy for Consumer Customers"
+label variable num_products "Count variable (Max # Products Value in full case)"
+label variable cs_other "Dummy for Credit Segment: Other"
+label variable cs_low_balance "Dummy for Credit Segment: Low Balance"
+label variable cs_currents "Dummy for Credit Segment: Currents"
+label variable cs_seg_a "Dummy for Credit Segment: Seg A"
+label variable cs_high_balance "Dummy for Credit Segment: High Balance"
+label variable cs_cfs_team "Dummy for Credit Segment: CFS Team"
+label variable cs_arct_team "Dummy for Credit Segment: ARCT Team"
 
 
 

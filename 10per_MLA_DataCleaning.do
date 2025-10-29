@@ -1,4 +1,4 @@
-*** Joseph Lanser Data Cleaning for 5 percent data file ***
+*** Joseph Lanser Data Cleaning for 10 percent data file ***
 *** This file will create new variables needed, clear out uneeded variables, ***
 *** filter out unwanted cases, and roll up data to only that of which at case open ***
 *** Then this file will roll up based on the EN act code (case open only data) ***
@@ -7,7 +7,7 @@
 clear all
 
 
-*** Step 1: Load in .dta 5 percent data sample to be used ***
+*** Step 1: Load in .dta 10 percent data sample to be used ***
 * --------- settings (same base as your working raw path) ---------
 local HOME : env HOME
 local box  "`HOME'/Library/CloudStorage/Box-Box"
@@ -17,11 +17,11 @@ local proj_raw  "Amex_2025_Class/Raw Data"
 local proj_rand : subinstr local proj_raw "Raw Data" "Random Samples", all
 
 * --------- import the 5% sample CSV ---------
-import delimited using "`box'/`proj_rand'/amex_5_pct.csv", varnames(1) clear
+import delimited using "`box'/`proj_rand'/amex_10_pct.csv", varnames(1) clear
 
 * (optional) save a .dta copy for fast reloads
 compress
-save "`box'/`proj_rand'/amex_5_pct.dta", replace
+save "`box'/`proj_rand'/amex_10_pct.dta", replace
 
 describe
 count
@@ -291,7 +291,7 @@ replace tot_expr_lend         = tot_expr_lend         / 1000
 replace total_case_exposure   = total_case_exposure   / 1000
 replace tot_past_due_chrg_am  = tot_past_due_chrg_am  / 1000
 replace tot_past_due_lend_am  = tot_past_due_lend_am  / 1000
-replace tot_bal_due  = tot_due_chrg_am + tot_due_lend_am
+replace tot_bal_due  = tot_past_due_lend_am  / 1000
 
 
 label variable tot_due_chrg_am "Scaled /1000"
@@ -398,8 +398,7 @@ label variable cs_cfs_team "Dummy for Credit Segment: CFS Team"
 label variable cs_arct_team "Dummy for Credit Segment: ARCT Team"
 drop probc_score
 drop act_dt age_day_ct
-drop tot_due_chrg_am tot_due_lend_am tot_expr_chrg tot_expr_lend total_case_exposure tot_past_due_chrg_am tot_past_due_lend_am
-
+drop tot_due_chrg_am tot_due_lend_am tot_expr_chrg tot_expr_lend total_case_exposure tot_past_due_chrg_am tot_past_due_lend_am 
 
 
 
@@ -420,4 +419,4 @@ cap mkdir "`outdir'"
 
 * --------- save cleaned rolled dataset ---------
 compress
-save "`outdir'/5per_MLA_Cleaned_Rolled_Joseph.dta", replace
+save "`outdir'/10per_MLA_Cleaned_Rolled_Joseph.dta", replace

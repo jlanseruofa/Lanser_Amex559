@@ -17,6 +17,9 @@ program define run_gbm_report, rclass
     args data_path nt md lr sr psr minr
 
     use "`data_path'", clear
+	* drop unwanted predictors (keep DV!)
+    drop bal_due bal_over_expr tenure cs_other cs_low_balance cs_currents ///
+        cs_seg_a cs_high_balance cs_cfs_team cs_arct_team d_chrg_lend d_chrg num_products
     confirm variable roll_forward
     confirm variable d_train
     capture confirm numeric variable roll_forward

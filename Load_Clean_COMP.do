@@ -30,7 +30,6 @@ drop case_setup_type
 drop ctc_plce_cd
 drop ctc_prty_cd
 drop rule_no
-drop portfo_w_lvl_cd
 drop portfo_sta_lvl_cd
 drop act_info_cd1 act_info_cd2 act_info_cd3
 drop sprt_no sprt_keep_day_ct sprt_duns_am
@@ -382,7 +381,7 @@ label variable cs_seg_a "Dummy for Credit Segment: Seg A"
 label variable cs_high_balance "Dummy for Credit Segment: High Balance"
 label variable cs_cfs_team "Dummy for Credit Segment: CFS Team"
 label variable cs_arct_team "Dummy for Credit Segment: ARCT Team"
-drop probc_score
+* drop probc_score
 drop act_dt age_day_ct
 drop tot_due_chrg_am tot_due_lend_am tot_expr_chrg tot_expr_lend total_case_exposure tot_past_due_chrg_am tot_past_due_lend_am 
 drop past_due_roll
@@ -395,6 +394,42 @@ replace d_train = 0 if d_train == 2
 drop if missing(d_train)
 drop if d_consumer == 1
 drop d_consumer
+
+
+
+
+// create individual dummies
+foreach v in 200 250 600 610 615 COM CPD FOR MCS PIF PSD REP {
+    gen d_port_`v' = (portfo_w_lvl_cd == "`v'")
+}
+
+// create the "other" dummy
+gen d_port_other = 1
+foreach v in 200 250 600 610 615 COM CPD FOR MCS PIF PSD REP {
+    replace d_port_other = 0 if portfo_w_lvl_cd == "`v'"
+}
+
+drop portfo_w_lvl_cd
+
+
+
+
+
+
+foreach var in tsr cdss {
+    gen d_`var'_zero  = (`var' == 0)
+    gen d_`var'_nines = (`var' == .999)
+}
+
+
+foreach var in tsr cdss {
+    gen `var'_sq = `var'^2
+}
+
+
+
+
+
 
 * Save the cleaned .dta file to my Joseph folder in box *
 * --------- paths (same base as before) ---------

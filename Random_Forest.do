@@ -210,6 +210,8 @@ program define run_one_rf, rclass
     di as txt "TP: " %10.0f TP "  FP: " %10.0f FP "  FN: " %10.0f FN "  TN: " %10.0f TN
     di as txt "phat1 mean: " %6.4f `MEANPHAT' " | p01 " %5.3f `p01' " p05 " %5.3f `p05' " p10 " %5.3f `p10' ///
         " p25 " %5.3f `p25' " p50 " %5.3f `p50' " p75 " %5.3f `p75' " p90 " %5.3f `p90' " p95 " %5.3f `p95' " p99 " %5.3f `p99'
+		
+		
 
     * return scalars for programmatic access
     return scalar AUC       = `V_AUC'

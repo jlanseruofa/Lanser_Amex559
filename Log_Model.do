@@ -47,7 +47,6 @@ if r(N)==0 {
 // -------------------------------------
 // 1) AUC (OOB) on validation
 // -------------------------------------
-// Note: roctab draws a graph by default in modern Stata.
 quietly roctab roll_forward phat if d_train==0
 scalar auc_oob = r(area)
 
@@ -58,7 +57,7 @@ capture drop yhat05
 gen byte yhat05 = phat>=0.50 if d_train==0
 
 tempname M05
-tab yhat05 roll_forward if d_train==0, matcell(`M05') // rows: yhat=0,1 ; cols: y=0,1
+tab yhat05 roll_forward if d_train==0, matcell(`M05')
 scalar Nval = r(N)
 scalar tn05 = cond(rowsof(`M05')>=1 & colsof(`M05')>=1, `M05'[1,1], 0)
 scalar fn05 = cond(rowsof(`M05')>=1 & colsof(`M05')>=2, `M05'[1,2], 0)
@@ -86,7 +85,6 @@ forvalues s = 0/100 {
     tempname M
     quietly tab _yhat roll_forward if d_train==0, matcell(`M')
 
-    // Extract cells robustly even if some cells are absent
     scalar tn_ = cond(rowsof(`M')>=1 & colsof(`M')>=1, `M'[1,1], 0)
     scalar fn_ = cond(rowsof(`M')>=1 & colsof(`M')>=2, `M'[1,2], 0)
     scalar fp_ = cond(rowsof(`M')>=2 & colsof(`M')>=1, `M'[2,1], 0)
@@ -106,7 +104,7 @@ postclose `postH'
 
 preserve
 use "`f1grid'", clear
-gsort -f1 // best first
+gsort -f1
 keep in 1
 scalar t_best    = thresh[1]
 scalar f1_best   = f1[1]
@@ -136,7 +134,6 @@ scalar phat_max  = r(max)
 scalar phat_mean = r(mean)
 scalar phat_sd   = r(sd)
 
-// "All false / all true" diagnostics at 0.50
 scalar all_false_05 = (ppr05==0)
 scalar all_true_05  = (ppr05==1)
 
@@ -165,6 +162,45 @@ di as txt "== phat (validation) summary =="
 di as res "min: " %6.4f phat_min "   p25: " %6.4f phat_p25 "   median: " %6.4f phat_med "   p75: " %6.4f phat_p75 "   max: " %6.4f phat_max
 di as res "mean: " %6.4f phat_mean "   sd: " %6.4f phat_sd
 di as txt "--------------------------------------------------------------"
+
+// -------------------------------------
+// 6) Partial Dependence Plot (PDP) for tenure (validation fold)
+//     -> compute average predicted P(y=1) over d_train==0 while sweeping tenure
+// -------------------------------------
+preserve
+keep if d_train==0
+quietly summ tenure, meanonly
+if r(N)>0 {
+    local tmin = r(min)
+    local tmax = r(max)
+    local step = (r(max)-r(min))/50
+
+    tempfile pdpSB
+    tempname Psb
+    postfile `Psb' double(tenure pmean) using "`pdpSB'", replace
+
+    tempvar tenure_save
+    gen double `tenure_save' = tenure
+
+    forvalues i = 0/50 {
+        local t = `tmin' + `i'*`step'
+        quietly replace tenure = `t'
+        quietly predict double p_hat, pr
+        quietly summarize p_hat, meanonly
+        post `Psb' (`t') (r(mean))
+        drop p_hat
+    }
+    postclose `Psb'
+
+    use "`pdpSB'", clear
+    twoway line pmean tenure, ///
+        ytitle("Avg predicted P(roll_forward)") ///
+        xtitle("tenure") ///
+        title("PDP (Validation): tenure — SB") ///
+        legend(off)
+    graph export "`outdir'/PDP_tenure_SB.png", replace width(2400)
+}
+restore
 
 
 
@@ -220,7 +256,6 @@ if r(N)==0 {
 // -------------------------------------
 // 1) AUC (OOB) on validation
 // -------------------------------------
-// Note: roctab draws a graph by default in modern Stata.
 quietly roctab roll_forward phat if d_train==0
 scalar auc_oob = r(area)
 
@@ -231,7 +266,7 @@ capture drop yhat05
 gen byte yhat05 = phat>=0.50 if d_train==0
 
 tempname M05
-tab yhat05 roll_forward if d_train==0, matcell(`M05') // rows: yhat=0,1 ; cols: y=0,1
+tab yhat05 roll_forward if d_train==0, matcell(`M05')
 scalar Nval = r(N)
 scalar tn05 = cond(rowsof(`M05')>=1 & colsof(`M05')>=1, `M05'[1,1], 0)
 scalar fn05 = cond(rowsof(`M05')>=1 & colsof(`M05')>=2, `M05'[1,2], 0)
@@ -259,7 +294,6 @@ forvalues s = 0/100 {
     tempname M
     quietly tab _yhat roll_forward if d_train==0, matcell(`M')
 
-    // Extract cells robustly even if some cells are absent
     scalar tn_ = cond(rowsof(`M')>=1 & colsof(`M')>=1, `M'[1,1], 0)
     scalar fn_ = cond(rowsof(`M')>=1 & colsof(`M')>=2, `M'[1,2], 0)
     scalar fp_ = cond(rowsof(`M')>=2 & colsof(`M')>=1, `M'[2,1], 0)
@@ -279,7 +313,7 @@ postclose `postH'
 
 preserve
 use "`f1grid'", clear
-gsort -f1 // best first
+gsort -f1
 keep in 1
 scalar t_best    = thresh[1]
 scalar f1_best   = f1[1]
@@ -309,7 +343,6 @@ scalar phat_max  = r(max)
 scalar phat_mean = r(mean)
 scalar phat_sd   = r(sd)
 
-// "All false / all true" diagnostics at 0.50
 scalar all_false_05 = (ppr05==0)
 scalar all_true_05  = (ppr05==1)
 
@@ -338,6 +371,45 @@ di as txt "== phat (validation) summary =="
 di as res "min: " %6.4f phat_min "   p25: " %6.4f phat_p25 "   median: " %6.4f phat_med "   p75: " %6.4f phat_p75 "   max: " %6.4f phat_max
 di as res "mean: " %6.4f phat_mean "   sd: " %6.4f phat_sd
 di as txt "--------------------------------------------------------------"
+
+// -------------------------------------
+// 6) Partial Dependence Plot (PDP) for tenure (validation fold)
+//     -> compute average predicted P(y=1) over d_train==0 while sweeping tenure
+// -------------------------------------
+preserve
+keep if d_train==0
+quietly summ tenure, meanonly
+if r(N)>0 {
+    local tmin = r(min)
+    local tmax = r(max)
+    local step = (r(max)-r(min))/50
+
+    tempfile pdpCONS
+    tempname Pcons
+    postfile `Pcons' double(tenure pmean) using "`pdpCONS'", replace
+
+    tempvar tenure_save
+    gen double `tenure_save' = tenure
+
+    forvalues i = 0/50 {
+        local t = `tmin' + `i'*`step'
+        quietly replace tenure = `t'
+        quietly predict double p_hat, pr
+        quietly summarize p_hat, meanonly
+        post `Pcons' (`t') (r(mean))
+        drop p_hat
+    }
+    postclose `Pcons'
+
+    use "`pdpCONS'", clear
+    twoway line pmean tenure, ///
+        ytitle("Avg predicted P(roll_forward)") ///
+        xtitle("tenure") ///
+        title("PDP (Validation): tenure — CONS") ///
+        legend(off)
+    graph export "`outdir'/PDP_tenure_CONS.png", replace width(2400)
+}
+restore
 
 
 
@@ -377,7 +449,6 @@ logit roll_forward ///
     if d_train == 1
 
 // ---------------- Marginal effects (delta method) -------------------------
-// Average marginal effects (AME) across the training sample
 margins, dydx(*) vce(delta)
 
 
@@ -413,5 +484,4 @@ logit roll_forward ///
     if d_train == 1
 
 // ---------------- Marginal effects (delta method) -------------------------
-// Average marginal effects (AME) across the training sample
 margins, dydx(*) vce(delta)

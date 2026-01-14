@@ -60,3 +60,55 @@ foreach v of local vars {
 }
 order variable Mean P25 Median P75 Min Max SD
 export delimited summary_stats.csv, replace
+
+
+
+
+
+
+
+*------------------------------------------------------------
+* Crosstabs: Scatter plots
+*------------------------------------------------------------
+
+tab slept_in_hot_temp d_finances_constr_ac_use, row col
+tab slept_in_hot_temp perceived_risk_index, row col
+
+tab ac_frac d_finances_constr_ac_use, row col
+tab ac_frac perceived_risk_index, row col
+
+tab d_non_ac_cool_methods d_finances_constr_ac_use, row col
+tab d_non_ac_cool_methods perceived_risk_index, row col
+
+
+scatter ac_frac heat_related_symptoms
+corr ac_frac heat_related_symptoms
+
+
+scatter slept_in_hot_temp exposure_index
+scatter slept_in_hot_temp perceived_risk_index
+corr slept_in_hot_temp perceived_risk_index
+corr slept_in_hot_temp d_finances_constr_ac_use
+
+scatter ac_frac exposure_index
+scatter ac_frac perceived_risk_index
+scatter ac_frac d_finances_constr_ac_use
+
+scatter d_non_ac_cool_methods exposure_index
+scatter d_non_ac_cool_methods perceived_risk_index
+scatter d_non_ac_cool_methods d_finances_constr_ac_use
+
+
+* Corr Coeffs
+corr slept_in_hot_temp d_finances_constr_ac_use
+corr slept_in_hot_temp exposure_index
+corr slept_in_hot_temp perceived_risk_index
+
+corr ac_frac d_finances_constr_ac_use
+corr ac_frac exposure_index
+corr ac_frac perceived_risk_index
+
+corr d_non_ac_cool_methods d_finances_constr_ac_use
+corr d_non_ac_cool_methods exposure_index
+corr d_non_ac_cool_methods perceived_risk_index
+

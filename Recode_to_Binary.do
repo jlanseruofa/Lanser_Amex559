@@ -28,7 +28,6 @@ drop other_degree_of_education
 drop too_hot_tempc
 drop too_hot_temp_blank
 drop time_in_workplace
-drop work_location
 drop dress_code
 drop transportation_multi_answer transportation_multi_answer2 transportation_multi_answer3 transportation_multi_answer4 transportation_multi_answer5 transportation_other
 drop commute_time
@@ -62,7 +61,7 @@ drop education_clean
 * Recode to Dummies Whenver Possible*
 
 replace municipality_of_residence = 0 if municipality_of_residence == 2
-rename municipality_of_residence d_metro_res
+rename municipality_of_residence d_metro
 
 replace less_than_21 = 0 if missing(less_than_21)
 rename less_than_21 d_under_21
@@ -117,6 +116,7 @@ rename sealevel_rise_coastal_hazards d_sealevel_rise_damage
 
 replace hydrological_flooding_risks = 0 if hydrological_flooding_risks == 1
 replace hydrological_flooding_risks = 1 if hydrological_flooding_risks > 1 & !missing(hydrological_flooding_risks)
+replace hydrological_flooding_risks = 1 if hydrological_flooding_risks > 1 & !missing(hydrological_flooding_risks)
 rename hydrological_flooding_risks d_flood_damage
 
 replace earthquakes_p40 = 0 if earthquakes_p40 == 1
@@ -131,7 +131,7 @@ rename tropicalstorm_laura_or_isaias d_tropical_storm_damage
 
 
 * Fix labels and names as needed *
-label variable d_metro_res ""
+label variable d_metro ""
 label variable d_female ""
 label variable d_employed ""
 label variable d_female_financial_lead ""

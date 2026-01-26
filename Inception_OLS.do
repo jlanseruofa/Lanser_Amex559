@@ -2,7 +2,7 @@
 * Project: PR Heat Survey
 * Created on: Jan 14 2026
 * Created by: Joseph Lanser and Anna Josephson
-* Edited on: 14 Jan 2026
+* Edited on: 26 Jan 2026
 * Edited by: JL
 * Stata v.18.5
 *
@@ -16,6 +16,19 @@ clear all
 use "$data/prheatsurvey_clean_oct25.dta", clear
 
 
+
+* Clean missing data to represent reality
+* Note: removed d_finances_constr_ac_use from all models due to high missingness and correlation with variables such as Income, Employment Status Etc.
+
+* For AC Hour variables, missings are people who don't have AC at home, should be 0 not missing *
+foreach var in weekday_ac_hours_per_day weekend_ac_hours_per_day ac_hours_per_week {
+    replace `var' = 0 if missing(`var')
+}
+
+* For Work location and job type vars, missings are unemployed people, should be 0 not missing *
+foreach var in job_type work_location {
+    replace `var' = 0 if missing(`var')
+}
 
 
 
@@ -82,7 +95,6 @@ regress exposure_index ///
 regress ac_hours_per_week ///
     total_household_income ///
     work_location ///
-    d_finances_constr_ac_use ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -97,7 +109,6 @@ regress ac_hours_per_week ///
 regress d_ac_trans ///
     total_household_income ///
     work_location ///
-    d_finances_constr_ac_use ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -112,7 +123,6 @@ regress d_ac_trans ///
 regress use_public_ac ///
     total_household_income ///
     work_location ///
-    d_finances_constr_ac_use ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -128,7 +138,6 @@ regress use_public_ac ///
 
 regress ac_hours_per_week ///
     total_household_income ///
-    d_finances_constr_ac_use ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -141,7 +150,6 @@ regress ac_hours_per_week ///
 	
 regress d_ac_trans ///
     total_household_income ///
-    d_finances_constr_ac_use ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -154,7 +162,6 @@ regress d_ac_trans ///
 	
 regress use_public_ac ///
     total_household_income ///
-    d_finances_constr_ac_use ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///

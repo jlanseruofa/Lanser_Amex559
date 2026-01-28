@@ -94,7 +94,7 @@ regress exposure_index ///
 * y = ac hours per week
 regress ac_hours_per_week ///
     total_household_income ///
-    work_location ///
+    i.work_location ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -108,7 +108,7 @@ regress ac_hours_per_week ///
 * y = AC Transportation
 regress d_ac_trans ///
     total_household_income ///
-    work_location ///
+    i.work_location ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -122,7 +122,7 @@ regress d_ac_trans ///
 * y = Use of Public AC
 regress use_public_ac ///
     total_household_income ///
-    work_location ///
+    i.work_location ///
     d_missed_elec_bill ///
     d_alt_energy_source ///
     health_index ///
@@ -132,51 +132,3 @@ regress use_public_ac ///
     age d_female d_college_degree household_size ///
     i.job_type d_metro, vce(cluster postal_code)
 
-
-
-* Taking out job type and work location to improve number of obs...
-
-regress ac_hours_per_week ///
-    total_household_income ///
-    d_missed_elec_bill ///
-    d_alt_energy_source ///
-    health_index ///
-    trust_index ///
-    environmental_concern_index ///
-    perceived_risk_index ///
-    age d_female d_college_degree household_size ///
-    d_metro, vce(cluster postal_code)
-
-	
-regress d_ac_trans ///
-    total_household_income ///
-    d_missed_elec_bill ///
-    d_alt_energy_source ///
-    health_index ///
-    trust_index ///
-    environmental_concern_index ///
-    perceived_risk_index ///
-    age d_female d_college_degree household_size ///
-    d_metro, vce(cluster postal_code)
-
-	
-regress use_public_ac ///
-    total_household_income ///
-    d_missed_elec_bill ///
-    d_alt_energy_source ///
-    health_index ///
-    trust_index ///
-    environmental_concern_index ///
-    perceived_risk_index ///
-    age d_female d_college_degree household_size ///
-    d_metro, vce(cluster postal_code)
-
-	
-	
-	
-* Results: AC hours per week are consistently higher for households with greater income, 
-* while perceived risk matters only in the fuller model and is replaced by health and 
-* structural factors in the restricted specification. AC transportation is generally weakly 
-* explained, but perceived heat risk is a significant predictor once job and work controls 
-* are removed. Use of public AC is driven mainly by financial constraints and trust, 
-* with little role for income or risk perceptions.
